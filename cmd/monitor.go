@@ -3,16 +3,27 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
+	"github.com/bluewave-labs/checkmate-cli/internal/api/checkmate"
+	checkmateTypes "github.com/bluewave-labs/checkmate-cli/internal/api/checkmate/types"
 	"github.com/bluewave-labs/checkmate-cli/internal/cli"
 	"github.com/bluewave-labs/checkmate-cli/internal/config"
 	"github.com/bluewave-labs/checkmate-cli/internal/fs"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
+)
+
+var checkmateClient = checkmate.NewCheckmateClient(
+	&config.AppConfig,
+	&http.Client{
+		Timeout: 10 * time.Second,
+	},
 )
 
 var monitorCmd = &cobra.Command{
@@ -164,10 +175,10 @@ var bulkImportMonitorCmd = &cobra.Command{
 	Short: "Bulk import monitors",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		monitors := args[0] // Path to the file
+		monitorsFilePath := args[0] // Path to the file
 		printLimit, _ := cmd.Flags().GetInt("limit")
 
-		monitorCSV, err := fs.ReadCSVFile(monitors)
+		monitorCSV, err := fs.ReadCSVFile(monitorsFilePath)
 		if err != nil {
 			log.Fatalln(err)
 			return
@@ -175,6 +186,7 @@ var bulkImportMonitorCmd = &cobra.Command{
 
 		fmt.Printf("Monitors to be imported:\n\n")
 
+		// Listing
 		monitorNames, err := monitorCSV.ListColumn(0)
 		if err != nil {
 			log.Fatalln(err)
@@ -189,15 +201,38 @@ var bulkImportMonitorCmd = &cobra.Command{
 		}
 		fmt.Println("---")
 
+		// Confirmation
 		userInput, err := cli.StdIn("Do you want to continue? (y/n): ")
-
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		if strings.ToLower(userInput) == "y" {
+		if strings.ToLower(userInput) == "y" || strings.ToLower(userInput) == "yes" {
 			fmt.Println("Importing monitors...")
-			// CHECKMATE API CALL
+
+			var monitors []checkmateTypes.Monitor
+
+			for _, monitor := range monitorCSV.Rows {
+				monitors = append(monitors, checkmateTypes.Monitor{
+					UserID: "user-123", // TODO: Get the user ID from the config
+					TeamID: "team-123", // TODO: Get the team ID from the config
+					Name:   monitor[0],
+					URL:    monitor[1],
+					Type:   checkmateTypes.MonitorType(monitor[2]),
+				})
+			}
+
+			response, err := checkmateClient.CreateBulkMonitors(monitors)
+			if err != nil {
+				log.Fatalln(err)
+			}
+
+			if response.StatusCode == 201 {
+				fmt.Println("Monitors imported successfully")
+			} else {
+				fmt.Println("Failed to import monitors")
+			}
+
 		} else {
 			fmt.Println("Aborted")
 		}

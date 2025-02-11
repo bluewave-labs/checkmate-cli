@@ -1,4 +1,4 @@
-package api
+package checkmate
 
 import (
 	"net/http"
@@ -18,4 +18,11 @@ type CheckmateClient struct {
 
 func (c *CheckmateClient) SendRequest(req *http.Request) (*http.Response, error) {
 	return c.HTTPClient.Do(req)
+}
+
+func NewCheckmateClient(credentials *config.Credentials, httpClient *http.Client) *CheckmateClient {
+	return &CheckmateClient{
+		Credentials: credentials,
+		HTTPClient:  httpClient,
+	}
 }

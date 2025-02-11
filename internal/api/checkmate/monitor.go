@@ -1,4 +1,4 @@
-package api
+package checkmate
 
 import (
 	"bytes"
