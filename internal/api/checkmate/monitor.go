@@ -110,12 +110,11 @@ func (c *CheckmateClient) DeleteMonitor(id string) (*http.Response, error) {
 	return c.SendRequest(req)
 }
 
-func (c *CheckmateClient) CreateBulkMonitors(monitors any) (*http.Response, error) {
-	if m, ok := monitors.([]*types.Monitor); ok {
-		for _, monitor := range m {
-			if err := monitor.Validate(); err != nil {
-				return nil, err
-			}
+func (c *CheckmateClient) CreateBulkMonitors(monitors []types.Monitor) (*http.Response, error) {
+	// Validate each monitor
+	for _, monitor := range monitors {
+		if err := monitor.Validate(); err != nil {
+			return nil, err
 		}
 	}
 
