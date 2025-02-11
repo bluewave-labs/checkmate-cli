@@ -6,7 +6,7 @@ Manage your Checkmate monitoring setup with the Checkmate CLI.
 
 - [github.com/docker/docker](https://github.com/docker/docker) - Apache 2.0 Licensed
 - [github.com/fatih/color](https://github.com/fatih/color) - MIT Licensed
-- [github.com/go-playground/validator](github.com/go-playground/validator/v10) - MIT Licensed
+- [github.com/go-playground/validator](https://github.com/go-playground/validator/v10) - MIT Licensed
 - [github.com/spf13/cobra](https://github.com/spf13/cobra) - Apache 2.0 Licensed
 - [github.com/spf13/viper](https://github.com/spf13/viper) - MIT Licensed
 
