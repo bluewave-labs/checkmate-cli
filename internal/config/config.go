@@ -1,8 +1,7 @@
 package config
 
 import (
-	"fmt"
-
+	"github.com/bluewave-labs/checkmate-cli/pkg/logger"
 	"github.com/spf13/viper"
 )
 
@@ -20,7 +19,7 @@ func init() {
 
 	err := viper.ReadInConfig() // Find and read the config file
 	if err != nil {             // Handle errors reading the config file
-		fmt.Println(fmt.Errorf("fatal error config file: %w", err))
+		logger.Error(err.Error())
 	}
 
 	AppConfig = NewConfig()

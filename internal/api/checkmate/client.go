@@ -12,17 +12,17 @@ import (
 //
 // [Checkmate Server OpenAPI Specs]: https://github.com/bluewave-labs/Checkmate/blob/develop/Server/openapi.json
 type CheckmateClient struct {
-	Credentials *config.Credentials
-	HTTPClient  *http.Client
+	credentials *config.Credentials
+	httpClient  *http.Client
 }
 
 func (c *CheckmateClient) SendRequest(req *http.Request) (*http.Response, error) {
-	return c.HTTPClient.Do(req)
+	return c.httpClient.Do(req)
 }
 
 func NewCheckmateClient(credentials *config.Credentials, httpClient *http.Client) *CheckmateClient {
 	return &CheckmateClient{
-		Credentials: credentials,
-		HTTPClient:  httpClient,
+		credentials: credentials,
+		httpClient:  httpClient,
 	}
 }

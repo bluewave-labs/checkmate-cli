@@ -3,7 +3,6 @@ package docker
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/bluewave-labs/checkmate-cli/internal/fs"
 	"github.com/docker/docker/client"
@@ -12,8 +11,6 @@ import (
 type DockerClient struct {
 	Client *client.Client
 }
-
-// var a = fs.
 
 // BackupVolume creates a backup of the Docker volume identified by volumeName.
 // It does so by launching a temporary container using the "alpine" image that mounts
@@ -26,16 +23,10 @@ type DockerClient struct {
 func (d *DockerClient) BackupVolume(ctx context.Context, volumeName string, backupPath string) error {
 	vol, err := d.Client.VolumeInspect(ctx, volumeName)
 	if err != nil {
-		log.Fatalf("Error inspecting volume: %v", err)
+		return fmt.Errorf("error inspecting volume: %v", err)
 	}
 
-	err = fs.CreateTar(vol.Mountpoint, backupPath)
-
-	if err != nil {
-		log.Fatalf("Error backing up volume: %v", err)
-	}
-
-	return nil
+	return fs.CreateTar(vol.Mountpoint, backupPath)
 }
 
 // RestoreVolume restores the contents of a Docker volume from a backup file.
@@ -52,16 +43,10 @@ func (d *DockerClient) BackupVolume(ctx context.Context, volumeName string, back
 func (d *DockerClient) RestoreVolume(ctx context.Context, volumeName string, backupPath string) error {
 	vol, err := d.Client.VolumeInspect(ctx, volumeName)
 	if err != nil {
-		log.Fatalf("Error inspecting volume: %v", err)
+		return fmt.Errorf("error inspecting volume: %v", err)
 	}
 
-	err = fs.ExtractTarToVolume(backupPath, vol.Mountpoint)
-
-	if err != nil {
-		log.Fatalf("Error backing up volume: %v", err)
-	}
-
-	return nil
+	return fs.ExtractTarToVolume(backupPath, vol.Mountpoint)
 }
 
 func NewDockerClient() (*DockerClient, error) {

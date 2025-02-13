@@ -2,6 +2,7 @@ package fs
 
 import (
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"os"
 )
@@ -24,7 +25,7 @@ type CSVReader interface {
 
 func (c *CSV) ListColumn(index int) ([]string, error) {
 	if index < 0 || index >= len(c.Columns) {
-		return nil, fmt.Errorf("index out of range")
+		return nil, errors.New("index out of range")
 	}
 
 	var columnData []string
@@ -36,7 +37,7 @@ func (c *CSV) ListColumn(index int) ([]string, error) {
 
 func (c *CSV) ListRow(index int) ([]string, error) {
 	if index < 0 || index >= len(c.Rows) {
-		return nil, fmt.Errorf("index out of range")
+		return nil, errors.New("index out of range")
 	}
 	return c.Rows[index], nil
 }

@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"context"
-	"log"
 
 	"github.com/bluewave-labs/checkmate-cli/internal/api/docker"
+	"github.com/bluewave-labs/checkmate-cli/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +31,7 @@ var restoreCmd = &cobra.Command{
 
 		err = dockerClient.RestoreVolume(context.Background(), volumeName, backupPath)
 		if err != nil {
-			log.Fatalln("Error restoring volume", err)
+			logger.Error(err.Error())
 		}
 
 		cmd.Println("Volume restored successfully")

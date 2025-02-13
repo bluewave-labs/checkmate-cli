@@ -2,9 +2,9 @@ package cmd
 
 import (
 	"context"
-	"log"
 
 	"github.com/bluewave-labs/checkmate-cli/internal/api/docker"
+	"github.com/bluewave-labs/checkmate-cli/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -16,22 +16,19 @@ var backupCmd = &cobra.Command{
 		dockerClient, err := docker.NewDockerClient()
 
 		if err != nil {
-			log.Fatalln("Error creating docker client", err)
+			logger.Error(err.Error())
 		}
 
 		defer dockerClient.Client.Close()
 
-		// User input
 		// volumeName should be the first argument
 		// backupPath should be the second argument
-
-		// PANIIKKKK
 		volumeName := args[0]
 		backupPath := args[1]
 
 		err = dockerClient.BackupVolume(context.Background(), volumeName, backupPath)
 		if err != nil {
-			log.Fatalln("Error backing up volume", err)
+			logger.Error(err.Error())
 		}
 
 		cmd.Println("Volume backup created successfully")
