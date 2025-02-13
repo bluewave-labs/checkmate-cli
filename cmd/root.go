@@ -1,8 +1,7 @@
 package cmd
 
 import (
-	"log"
-
+	"github.com/bluewave-labs/checkmate-cli/pkg/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -28,6 +27,6 @@ func Execute() {
 	err := rootCmd.Execute()
 
 	if err != nil {
-		log.Fatalln(err)
+		logger.Error(err.Error())
 	}
 }
