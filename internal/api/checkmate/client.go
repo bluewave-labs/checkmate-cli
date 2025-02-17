@@ -43,7 +43,10 @@ func (c *CheckmateClient) performRequest(method string, path string, payload any
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set(auth.headerKey, auth.header+c.credentials.APIKey)
+
+	if auth != nil {
+		req.Header.Set(auth.headerKey, auth.header+c.credentials.APIKey)
+	}
 
 	response, err := c.httpClient.Do(req)
 	if err != nil {
