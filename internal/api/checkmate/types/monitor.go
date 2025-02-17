@@ -24,6 +24,8 @@ var ErrUnauthorized = errors.New("401 unauthorized. Please make sure you are log
 var ErrNotFound = errors.New("404 not found. Please make sure you are using the correct endpoint.")
 var ErrBadRequest = errors.New("400 bad request.")
 var ErrUnprocessableEntity = errors.New("422 unprocessable entity. Please make sure you are using the correct data format.")
+var ErrClientError = errors.New("4xx client side error occured.")
+var ErrServerError = errors.New("5xx server side error occured.")
 
 // This struct represents a monitor object.
 // Validations are done using the go-playground/validator package to ensure that the monitor data is valid.
