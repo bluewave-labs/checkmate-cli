@@ -3,14 +3,13 @@ package checkmate
 import (
 	"bytes"
 	"encoding/json"
-	"io"
 	"net/http"
 
 	"github.com/bluewave-labs/checkmate-cli/internal/api/checkmate/types"
 )
 
 // CreateMonitor creates a new monitor
-func (c *CheckmateClient) CreateMonitor(monitor *types.Monitor) (*http.Response, error) {
+func (c *CheckmateClient) CreateMonitor(monitor *types.Monitor) (*types.APIResponse, error) {
 	validationErr := monitor.Validate()
 	if validationErr != nil {
 		return nil, validationErr
@@ -35,11 +34,27 @@ func (c *CheckmateClient) CreateMonitor(monitor *types.Monitor) (*http.Response,
 		req.Header.Set("Authorization", "Bearer "+c.credentials.APIKey)
 	}
 
-	return c.SendRequest(req)
+	response, err := c.SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = responseStatusCodeHandler(response)
+	if err != nil {
+		return nil, err
+	}
+
+	apiResponse, err := bodyParser(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Print the response body as a string
+	return apiResponse, nil
 }
 
 // GetMonitor retrieves a monitor by ID
-func (c *CheckmateClient) GetMonitor(id string) (*http.Response, error) {
+func (c *CheckmateClient) GetMonitor(id string) (*types.APIResponse, error) {
 	req, err := http.NewRequest("GET", c.credentials.APIBaseURL+"/monitors/"+id, nil)
 
 	if err != nil {
@@ -51,13 +66,28 @@ func (c *CheckmateClient) GetMonitor(id string) (*http.Response, error) {
 		req.Header.Set("Authorization", "Bearer "+c.credentials.APIKey)
 	}
 
-	return c.SendRequest(req)
+	response, err := c.SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = responseStatusCodeHandler(response)
+	if err != nil {
+		return nil, err
+	}
+
+	apiResponse, err := bodyParser(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Print the response body as a string
+	return apiResponse, nil
 }
 
 // GetAllMonitors retrieves all monitors
 func (c *CheckmateClient) GetAllMonitors() (*types.APIResponse, error) {
 	req, err := http.NewRequest("GET", c.credentials.APIBaseURL+"/monitors/", nil)
-
 	if err != nil {
 		return nil, err
 	}
@@ -67,43 +97,27 @@ func (c *CheckmateClient) GetAllMonitors() (*types.APIResponse, error) {
 		req.Header.Set("Authorization", "Bearer "+c.credentials.APIKey)
 	}
 
-	monitorResponse, err := c.SendRequest(req)
-	if err != nil {
-		return nil, err
-	}
-	switch monitorResponse.StatusCode {
-	case http.StatusForbidden:
-		return nil, types.ErrForbidden
-	case http.StatusUnauthorized:
-		return nil, types.ErrUnauthorized
-	case http.StatusNotFound:
-		return nil, types.ErrNotFound
-	case http.StatusBadRequest:
-		return nil, types.ErrBadRequest
-	case http.StatusUnprocessableEntity:
-		return nil, types.ErrUnprocessableEntity
-	}
-
-	defer monitorResponse.Body.Close()
-
-	var apiResponse types.APIResponse
-	// Read the response body
-	body, err := io.ReadAll(monitorResponse.Body)
+	response, err := c.SendRequest(req)
 	if err != nil {
 		return nil, err
 	}
 
-	err = json.Unmarshal(body, &apiResponse)
+	err = responseStatusCodeHandler(response)
+	if err != nil {
+		return nil, err
+	}
+
+	apiResponse, err := bodyParser(response.Body)
 	if err != nil {
 		return nil, err
 	}
 
 	// Print the response body as a string
-	return &apiResponse, nil
+	return apiResponse, nil
 }
 
 // UpdateMonitor updates an existing monitor
-func (c *CheckmateClient) UpdateMonitor(id string, monitor *types.Monitor) (*http.Response, error) {
+func (c *CheckmateClient) UpdateMonitor(id string, monitor *types.Monitor) (*types.APIResponse, error) {
 	var requestBody []byte
 
 	requestBody, err := json.Marshal(monitor)
@@ -123,11 +137,27 @@ func (c *CheckmateClient) UpdateMonitor(id string, monitor *types.Monitor) (*htt
 		req.Header.Set("Authorization", "Bearer "+c.credentials.APIKey)
 	}
 
-	return c.SendRequest(req)
+	response, err := c.SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = responseStatusCodeHandler(response)
+	if err != nil {
+		return nil, err
+	}
+
+	apiResponse, err := bodyParser(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Print the response body as a string
+	return apiResponse, nil
 }
 
 // DeleteMonitor deletes a monitor by ID
-func (c *CheckmateClient) DeleteMonitor(id string) (*http.Response, error) {
+func (c *CheckmateClient) DeleteMonitor(id string) (*types.APIResponse, error) {
 	req, err := http.NewRequest("DELETE", c.credentials.APIBaseURL+"/monitors/"+id, nil)
 
 	if err != nil {
@@ -139,10 +169,26 @@ func (c *CheckmateClient) DeleteMonitor(id string) (*http.Response, error) {
 		req.Header.Set("Authorization", "Bearer "+c.credentials.APIKey)
 	}
 
-	return c.SendRequest(req)
+	response, err := c.SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = responseStatusCodeHandler(response)
+	if err != nil {
+		return nil, err
+	}
+
+	apiResponse, err := bodyParser(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Print the response body as a string
+	return apiResponse, nil
 }
 
-func (c *CheckmateClient) CreateBulkMonitors(monitors []types.Monitor) (*http.Response, error) {
+func (c *CheckmateClient) CreateBulkMonitors(monitors []types.Monitor) (*types.APIResponse, error) {
 	// Validate each monitor
 	for _, monitor := range monitors {
 		if err := monitor.Validate(); err != nil {
@@ -169,5 +215,21 @@ func (c *CheckmateClient) CreateBulkMonitors(monitors []types.Monitor) (*http.Re
 		req.Header.Set("Authorization", "Bearer "+c.credentials.APIKey)
 	}
 
-	return c.SendRequest(req)
+	response, err := c.SendRequest(req)
+	if err != nil {
+		return nil, err
+	}
+
+	err = responseStatusCodeHandler(response)
+	if err != nil {
+		return nil, err
+	}
+
+	apiResponse, err := bodyParser(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	// Print the response body as a string
+	return apiResponse, nil
 }
