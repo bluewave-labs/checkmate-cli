@@ -27,7 +27,7 @@ func (c *CheckmateClient) performRequest(method string, path string, payload any
 	var err error
 	var req *http.Request
 
-	if method == http.MethodGet {
+	if method == http.MethodGet || method == http.MethodDelete {
 		req, err = http.NewRequest(method, c.credentials.APIBaseURL+path, nil)
 	} else {
 		requestBody, err = json.Marshal(payload)
