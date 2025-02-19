@@ -1,6 +1,6 @@
 # Checkmate CLI
 
-Manage your [Checkmate](https://github.com/bluewave-labs/checkmate) monitoring setup with the Checkmate CLI.
+Manage your [Checkmate](https://github.com/bluewave-labs/checkmate) monitoring setup with the Checkmate command line interface (CLI).
 
 ## Direct Open Source Dependencies
 
