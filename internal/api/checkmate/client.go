@@ -15,7 +15,7 @@ import (
 // It is used to send HTTP requests to the Checkmate API.
 // See [Checkmate Server OpenAPI Specs] for more details.
 //
-// [Checkmate Server OpenAPI Specs]: https://github.com/bluewave-labs/Checkmate/blob/develop/Server/openapi.json
+// [Checkmate Server OpenAPI Specs]: https://github.com/bluewave-labs/checkmate-backend/blob/master/openapi.json
 type CheckmateClient struct {
 	credentials   *config.Credentials
 	httpClient    *http.Client

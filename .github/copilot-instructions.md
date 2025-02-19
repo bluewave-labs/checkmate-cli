@@ -24,4 +24,4 @@ It regularly checks whether a server/website is accessible and performs optimall
 
 Checkmate's API is documented in accordance with the OpenAPI spec.
 
-Use this [checkmate-openapi-specs](https://github.com/bluewave-labs/Checkmate/blob/develop/Server/openapi.json) for the API documentation.
+Use this [checkmate-openapi-specs](https://github.com/bluewave-labs/checkmate-backend/blob/master/openapi.json) for the API documentation.
