@@ -10,6 +10,8 @@ var AppConfig Credentials
 type Credentials struct {
 	APIBaseURL string
 	APIKey     string
+	UserID     string
+	TeamID     string
 }
 
 func init() {
@@ -29,5 +31,7 @@ func NewConfig() Credentials {
 	return Credentials{
 		APIBaseURL: viper.GetString("base_url"),
 		APIKey:     viper.GetString("api_key"),
+		UserID:     viper.GetString("user_id"),
+		TeamID:     viper.GetString("team_id"),
 	}
 }
