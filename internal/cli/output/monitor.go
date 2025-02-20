@@ -7,8 +7,21 @@ Team ID: {{cyan .TeamID }}
 Total Monitors: {{blue (intToString (len .TotalMonitors))}}
 {{else}}
 There are no monitors
-{{- end }}
+{{- end -}}
+
 {{if and .UpMonitors (gt (len .UpMonitors) 0)}}
 Up Monitors: {{green (intToString (len .UpMonitors))}}
+{{range .UpMonitors}}
+- {{ .Name -}} ({{ .URL }})
+{{- end}}
 {{- else}}
-{{- end }}`
+{{- end }}
+
+{{if and .DownMonitors (gt (len .DownMonitors) 0)}}
+Down Monitors: {{red (intToString (len .DownMonitors))}}
+{{range .DownMonitors}}
+- {{ .Name -}} ({{ .URL }})
+{{- end}}
+{{- else}}
+{{- end }}
+`

@@ -44,9 +44,9 @@ type MonitorTemplate struct {
 	InstanceURL    string
 	TeamID         string
 	TotalMonitors  []string
-	UpMonitors     []string
-	DownMonitors   []string
-	PausedMonitors []string
+	UpMonitors     []Monitor
+	DownMonitors   []Monitor
+	PausedMonitors []Monitor
 }
 
 func (m *Monitor) Validate() error {
