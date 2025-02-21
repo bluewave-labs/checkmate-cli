@@ -1,6 +1,7 @@
 package visualizer
 
 import (
+	"fmt"
 	"html/template"
 	"os"
 
@@ -18,5 +19,9 @@ func (t Template) Stdout() error {
 		return err
 	}
 
-	return tmpl.Execute(os.Stdout, t.Data)
+	if err := tmpl.Execute(os.Stdout, t.Data); err != nil {
+		return fmt.Errorf("template execution failed: %w", err)
+	}
+
+	return nil
 }
