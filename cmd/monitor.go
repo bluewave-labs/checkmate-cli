@@ -132,9 +132,9 @@ var listAllMonitorCmd = &cobra.Command{
 				Data: user,
 			}
 		} else {
-			template = visualizer.Template{
-				Name: "monitor_list",
-				Data: user,
+			template = visualizer.Table{
+				Header: []any{"Name", "URL", "Type", "Status"},
+				Data:   user.MonitorTable(),
 			}
 		}
 
@@ -215,7 +215,7 @@ var bulkImportMonitorCmd = &cobra.Command{
 
 func init() {
 	bulkImportMonitorCmd.Flags().Int("limit", 5, "Limit the number of monitors to be printed")
-	listAllMonitorCmd.Flags().StringP("output", "o", "template", "Output format (table, template)")
+	listAllMonitorCmd.Flags().StringP("output", "o", "table", "Output format (table, template)")
 	listMonitorCmd.AddCommand(listUpMonitorCmd, listDownMonitorCmd, listPausedMonitorCmd, listAllMonitorCmd)
 	monitorCmd.AddCommand(addMonitorCmd, removeMonitorCmd, listMonitorCmd, bulkImportMonitorCmd)
 }
