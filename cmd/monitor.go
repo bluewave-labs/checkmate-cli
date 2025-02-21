@@ -2,28 +2,30 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/bluewave-labs/checkmate-cli/internal/api/checkmate"
 	checkmateTypes "github.com/bluewave-labs/checkmate-cli/internal/api/checkmate/types"
-	"github.com/bluewave-labs/checkmate-cli/internal/cli"
+	"github.com/bluewave-labs/checkmate-cli/internal/cli/input"
+	"github.com/bluewave-labs/checkmate-cli/internal/cli/output/visualizer"
 	"github.com/bluewave-labs/checkmate-cli/internal/config"
 	"github.com/bluewave-labs/checkmate-cli/internal/fs"
+	"github.com/bluewave-labs/checkmate-cli/pkg/logger"
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 )
 
+var appConfig = config.AppConfig
+
 var checkmateClient = checkmate.NewCheckmateClient(
-	&config.AppConfig,
+	&appConfig,
 	&http.Client{
 		Timeout: 10 * time.Second,
 	},
+	checkmate.NewBearerAuthenticator(appConfig.APIKey),
 )
 
 var monitorCmd = &cobra.Command{
@@ -46,127 +48,100 @@ var removeMonitorCmd = &cobra.Command{
 var listMonitorCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all monitors",
+}
+
+var listUpMonitorCmd = &cobra.Command{
+	Use:   "up",
+	Short: "List all up monitors",
+	Run:   func(cmd *cobra.Command, args []string) {},
+}
+var listDownMonitorCmd = &cobra.Command{
+	Use:   "down",
+	Short: "List all down monitors",
+	Run:   func(cmd *cobra.Command, args []string) {},
+}
+var listPausedMonitorCmd = &cobra.Command{
+	Use:   "paused",
+	Short: "List all paused monitors",
+	Run:   func(cmd *cobra.Command, args []string) {},
+}
+var listAllMonitorCmd = &cobra.Command{
+	Use:   "all",
+	Short: "List all monitors",
 	Run: func(cmd *cobra.Command, args []string) {
-		teamId := "team-123"
-		instanceURL := config.AppConfig.APIBaseURL
+		// Command output format
+		// "table" or "template"
+		outputFormat, _ := cmd.Flags().GetString("output")
 
-		monitorListTemplate := `Your Checkmate Monitors on instance: %s
-Team ID: %s
+		// Get all monitors from the Checkmate API
+		resp, err := checkmateClient.GetAllMonitors()
+		if err != nil {
+			logger.Error("error getting all monitors: " + err.Error())
+		}
 
-Total Monitors : %s
-		`
-		monitorListOutput := fmt.Sprintf(monitorListTemplate,
-			color.GreenString(instanceURL), // Your instance URL
-			color.CyanString(teamId),       // Your team ID
+		// Parse the response data
+		var allMonitors []checkmateTypes.Monitor
+		for _, monitorData := range resp.Data.([]interface{}) {
+			allMonitors = append(allMonitors, checkmateTypes.Monitor{
+				Name:     monitorData.(map[string]interface{})["name"].(string),
+				URL:      monitorData.(map[string]interface{})["url"].(string),
+				Type:     checkmateTypes.MonitorType(monitorData.(map[string]interface{})["type"].(string)),
+				UserID:   appConfig.UserID,
+				TeamID:   appConfig.TeamID,
+				IsActive: monitorData.(map[string]interface{})["isActive"].(bool),
+				Status:   monitorData.(map[string]interface{})["status"].(bool),
+			})
+		}
 
-			color.BlueString("10"), // Total Monitors
-		)
+		var upMonitors []checkmateTypes.Monitor
+		var downMonitors []checkmateTypes.Monitor
+		var pausedMonitors []checkmateTypes.Monitor
 
-		if len(args) > 0 {
-			switch args[0] {
-			case "up":
-				upListTemplate := `
-Up Monitors    : %s
-	%s
-`
-				upMonitors := `- Google
-	- Facebook
-	- Twitter
-	- GitHub
-	- Bluesky Social`
+		for _, monitor := range allMonitors {
+			if !monitor.IsActive {
+				pausedMonitors = append(pausedMonitors, monitor)
+			}
 
-				monitorListOutput += fmt.Sprintf(upListTemplate,
-					color.GreenString("5"), // Up Monitors
-					upMonitors,             // Indented list of up monitors
-				)
-			case "down":
-				downListTemplate := `
-Down Monitors  : %s
-	%s`
-				downMonitors := `- Google 404
-	- LinkedIn
-	- Netflix`
-
-				monitorListOutput += fmt.Sprintf(downListTemplate,
-					color.RedString("3"), // Down Monitors
-					downMonitors,         // Indented list of down monitors
-				)
-			case "paused":
-				pausedListTemplate := `
-Paused Monitors: %s
-	%s`
-				pausedMonitors := `- LinkedIn
-	- Instagram`
-				monitorListOutput += fmt.Sprintf(pausedListTemplate,
-					color.YellowString("2"), // Paused Monitors
-					pausedMonitors,          // Indented list of paused monitors
-				)
-			case "another":
-				var tmplFile = "template/monitor_list.tmpl"
-				tmpl, err := template.New("monitor_list.tmpl").Funcs(template.FuncMap{
-					"green": func(input string) string {
-						return color.GreenString(input)
-					},
-					"red": func(input string) string {
-						return color.RedString(input)
-					},
-					"yellow": func(input string) string {
-						return color.YellowString(input)
-					},
-					"blue": func(input string) string {
-						return color.BlueString(input)
-					},
-					"cyan": func(input string) string {
-						return color.CyanString(input)
-					},
-					"join": func(input []string) string {
-						return fmt.Sprintf("%v", input)
-					},
-					"intToString": func(i int) string {
-						return strconv.Itoa(i)
-					},
-				}).ParseFiles(tmplFile)
-
-				if err != nil {
-					panic("Error parsing template: " + err.Error())
-				}
-				type MonitorTemplate struct {
-					InstanceURL    string
-					TeamID         string
-					TotalMonitors  []string
-					UpMonitors     []string
-					DownMonitors   []string
-					PausedMonitors []string
-				}
-				user := MonitorTemplate{
-					InstanceURL:    instanceURL,
-					TeamID:         teamId,
-					TotalMonitors:  []string{"a", "b", "c", "d", "e", "f", "g", "h", "i", "j"},
-					UpMonitors:     []string{"a", "b", "c", "d", "e"},
-					DownMonitors:   []string{"a", "b", "c"},
-					PausedMonitors: []string{"a", "b"},
-				}
-
-				err = tmpl.Execute(os.Stdout, user)
-				if err != nil {
-					panic(err)
-				}
-			default:
-				// monitorListOutput += upMonitor
-				// monitorListOutput += downMonitor
-				// monitorListOutput += pausedMonitor
+			switch monitor.Status {
+			case true:
+				upMonitors = append(upMonitors, monitor)
+			case false:
+				downMonitors = append(downMonitors, monitor)
 			}
 		}
 
-		// api request then
-		//
-		// response.data.summary
-		// totalMonitors int
-		// upMonitors int
-		// downMonitors int
-		// pausedMonitors int
+		user := checkmateTypes.MonitorTemplate{
+			InstanceURL:    appConfig.APIBaseURL,
+			TeamID:         appConfig.TeamID,
+			TotalMonitors:  getNameKeys(allMonitors), // Use the keys of the monitor list. It's a walkaround for using string slice in template.
+			UpMonitors:     upMonitors,
+			DownMonitors:   downMonitors,
+			PausedMonitors: pausedMonitors,
+		}
 
-		fmt.Println(monitorListOutput)
+		var template visualizer.Visualizer
+
+		if outputFormat == "table" {
+			template = visualizer.Table{
+				Header: []any{"Name", "URL", "Type", "Status"},
+				Data:   user.MonitorTable(),
+			}
+		} else if outputFormat == "template" {
+			template = visualizer.Template{
+				Name: "monitor_list",
+				Data: user,
+			}
+		} else {
+			template = visualizer.Template{
+				Name: "monitor_list",
+				Data: user,
+			}
+		}
+
+		err = template.Stdout()
+		if err != nil {
+			logger.Error("error rendering monitor list: " + err.Error())
+		}
 	},
 }
 
@@ -175,13 +150,12 @@ var bulkImportMonitorCmd = &cobra.Command{
 	Short: "Bulk import monitors",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		monitorsFilePath := args[0] // Path to the file
-		printLimit, _ := cmd.Flags().GetInt("limit")
+		monitorsFilePath := args[0]                  // Path to the file
+		printLimit, _ := cmd.Flags().GetInt("limit") // Limit the number of monitors to be printed
 
 		monitorCSV, err := fs.ReadCSVFile(monitorsFilePath)
 		if err != nil {
-			log.Fatalln(err)
-			return
+			logger.Error(err.Error())
 		}
 
 		fmt.Printf("Monitors to be imported:\n\n")
@@ -189,7 +163,7 @@ var bulkImportMonitorCmd = &cobra.Command{
 		// Listing
 		monitorNames, err := monitorCSV.ListColumn(0)
 		if err != nil {
-			log.Fatalln(err)
+			logger.Error("error listing monitor names: " + err.Error())
 		}
 
 		for i := 0; i < monitorCSV.RowsCount; i++ {
@@ -202,9 +176,9 @@ var bulkImportMonitorCmd = &cobra.Command{
 		fmt.Println("---")
 
 		// Confirmation
-		userInput, err := cli.StdIn("Do you want to continue? (y/n): ")
+		userInput, err := input.StdIn("Do you want to continue? (y/n): ")
 		if err != nil {
-			log.Fatalln(err)
+			logger.Error(err.Error())
 		}
 
 		if strings.ToLower(userInput) == "y" || strings.ToLower(userInput) == "yes" {
@@ -214,8 +188,8 @@ var bulkImportMonitorCmd = &cobra.Command{
 
 			for _, monitor := range monitorCSV.Rows {
 				monitors = append(monitors, checkmateTypes.Monitor{
-					UserID: "user-123", // TODO: Get the user ID from the config
-					TeamID: "team-123", // TODO: Get the team ID from the config
+					UserID: appConfig.UserID,
+					TeamID: appConfig.TeamID,
 					Name:   monitor[0],
 					URL:    monitor[1],
 					Type:   checkmateTypes.MonitorType(monitor[2]),
@@ -224,10 +198,10 @@ var bulkImportMonitorCmd = &cobra.Command{
 
 			response, err := checkmateClient.CreateBulkMonitors(monitors)
 			if err != nil {
-				log.Fatalln(err)
+				logger.Error("error creating bulk monitors: " + err.Error())
 			}
 
-			if response.StatusCode == 201 {
+			if response.Success {
 				fmt.Println("Monitors imported successfully")
 			} else {
 				fmt.Println("Failed to import monitors")
@@ -241,5 +215,16 @@ var bulkImportMonitorCmd = &cobra.Command{
 
 func init() {
 	bulkImportMonitorCmd.Flags().Int("limit", 5, "Limit the number of monitors to be printed")
+	listAllMonitorCmd.Flags().StringP("output", "o", "template", "Output format (table, template)")
+	listMonitorCmd.AddCommand(listUpMonitorCmd, listDownMonitorCmd, listPausedMonitorCmd, listAllMonitorCmd)
 	monitorCmd.AddCommand(addMonitorCmd, removeMonitorCmd, listMonitorCmd, bulkImportMonitorCmd)
+}
+
+// FIXME: This function is in the wrong place.
+func getNameKeys(monitorList []checkmateTypes.Monitor) []string {
+	var names []string
+	for _, monitor := range monitorList {
+		names = append(names, monitor.Name)
+	}
+	return names
 }
