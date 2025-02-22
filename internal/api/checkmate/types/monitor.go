@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 
+	"github.com/fatih/color"
 	"github.com/go-playground/validator/v10"
 )
 
@@ -47,6 +48,24 @@ type MonitorTemplate struct {
 	UpMonitors     []Monitor
 	DownMonitors   []Monitor
 	PausedMonitors []Monitor
+}
+
+func (m *MonitorTemplate) MonitorTable() [][]string {
+	var result [][]string
+
+	for _, monitor := range m.UpMonitors {
+		result = append(result, []string{monitor.Name, monitor.URL, string(monitor.Type), color.GreenString("Up")})
+	}
+
+	for _, monitor := range m.DownMonitors {
+		result = append(result, []string{monitor.Name, monitor.URL, string(monitor.Type), color.RedString("Down")})
+	}
+
+	for _, monitor := range m.PausedMonitors {
+		result = append(result, []string{monitor.Name, monitor.URL, string(monitor.Type), color.YellowString("Paused")})
+	}
+
+	return result
 }
 
 func (m *Monitor) Validate() error {
